@@ -1,4 +1,3 @@
-using IPK_Project2.Enums;
 using CommandLine;
 
 namespace IPK_Project2;
