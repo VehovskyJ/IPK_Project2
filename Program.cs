@@ -3,12 +3,12 @@
 namespace IPK_Project2;
 
 static class Program {
-    static void Main(string[] args) {
-        // Parse arguments
-        Cli? cli = null;
-        Parser.Default.ParseArguments<Cli>(args)
-            .WithParsed<Cli>(o => { cli = o; })
-            .WithNotParsed<Cli>((errs) => { Console.Error.WriteLine("Error occured while parsing arguments."); });
+	static void Main(string[] args) {
+		// Parse arguments
+		ParserResult<Cli> cli = Parser.Default.ParseArguments<Cli>(args);
+		cli.WithNotParsed(o => {
+			Environment.Exit(0);
+		});
 
         if (cli != null) {
             var properties = typeof(Cli).GetProperties();
