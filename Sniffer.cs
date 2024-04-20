@@ -46,8 +46,12 @@ public static class Sniffer {
 		}
 		_packetCaptured++;
 
-		PacketInfo packetInfo = new PacketInfo();
-		packetInfo.PacketToObject(packetCapture);
-		packetInfo.PrintPacket(_packetCaptured, _args.Num);
+		try {
+			PacketInfo packetInfo = new PacketInfo();
+			packetInfo.PacketToObject(packetCapture);
+			packetInfo.PrintPacket(_packetCaptured, _args.Num);
+		} catch (Exception e) {
+			Error.Exit(e.Message);
+		}
 	}
 }

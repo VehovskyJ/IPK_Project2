@@ -26,14 +26,13 @@ public class PacketInfo {
 
 		// Check if the protocol is ICMP
 		Protocol = ipPacket.Protocol;
-		if (Protocol != ProtocolType.Icmp) {
+		if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
 			var tpcPacket = (TcpPacket)Packet.Extract<TcpPacket>();
 
 			SourcePort = tpcPacket.SourcePort;
 			DestinationPort = tpcPacket.DestinationPort;
 		}
-
-
+		
 		Timestamp = packetCapture.Header.Timeval.Date.ToLocalTime().ToString("s");
 		SourceMac = FormatMacAddress(ethPacket.SourceHardwareAddress);
 		DestinationMac = FormatMacAddress(ethPacket.DestinationHardwareAddress);
@@ -61,7 +60,7 @@ public class PacketInfo {
 		Console.WriteLine($"frame length: {FrameLength} bytes");
 		Console.WriteLine($"src IP: {SourceIp}");
 		Console.WriteLine($"dst IP: {DestinationIp}");
-		if (Protocol == ProtocolType.Icmp) {
+		if (Protocol == ProtocolType.Icmp || Protocol != ProtocolType.IcmpV6) {
 			Console.WriteLine($"src port: {SourcePort}");
 			Console.WriteLine($"dst port: {DestinationPort}");
 		}
