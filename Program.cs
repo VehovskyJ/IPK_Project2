@@ -19,14 +19,24 @@ static class Program {
 
 		// Print available interfaces if the value for -i or --interface was not specified or no argument were provided
 		if (cli.Value.Interface == null || args.Length == 0) {
-			Interface.ListNetworkInterfaces();
+			try {
+				Interface.ListNetworkInterfaces();
+			} catch (Exception e) {
+				Error.Exit(e.Message);
+			}
+			
 			Environment.Exit(0);
 		}
 
 		// Handle invalid interface
 		if (!Interface.InterfaceExists(cli.Value.Interface)) {
 			Error.Print($"Interface {cli.Value.Interface} does not exist");
-			Interface.ListNetworkInterfaces();
+			try {
+				Interface.ListNetworkInterfaces();
+			} catch (Exception e) {
+				Error.Exit(e.Message);
+			}
+			
 			Environment.Exit(1);
 		}
 	}
