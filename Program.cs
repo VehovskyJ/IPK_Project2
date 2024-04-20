@@ -39,6 +39,12 @@ static class Program {
 			
 			Environment.Exit(1);
 		}
+
+		try {
+			Sniffer.Sniff(cli.Value);
+		} catch (Exception e) {
+			Error.Exit(e.Message);
+		}
 	}
 
 	// Handle CTRL+C
