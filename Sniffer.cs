@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using PacketDotNet;
 using SharpPcap;
 
@@ -44,8 +45,9 @@ public static class Sniffer {
 			Environment.Exit(0);
 		}
 		_packetCaptured++;
-		
-		var packet = Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType, packetCapture.GetPacket().Data);
-		Console.WriteLine(packet.ToString());
+
+		PacketInfo packetInfo = new PacketInfo();
+		packetInfo.PacketToObject(packetCapture);
+		packetInfo.PrintPacket(_packetCaptured, _args.Num);
 	}
 }
