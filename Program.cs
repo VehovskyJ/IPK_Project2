@@ -2,11 +2,15 @@
 using CommandLine;
 using CommandLine.Text;
 using Microsoft.VisualBasic;
+using SharpPcap;
 
 namespace IPK_Project2;
 
 static class Program {
 	static void Main(string[] args) {
+		// Handle CTRL+C
+		Console.CancelKeyPress += new ConsoleCancelEventHandler(HandleCancelEvent);
+		
 		// Parse arguments
 		ParserResult<Cli> cli = Parser.Default.ParseArguments<Cli>(args);
 		cli.WithNotParsed(o => {
@@ -25,5 +29,12 @@ static class Program {
 			Interface.ListNetworkInterfaces();
 			Environment.Exit(1);
 		}
+	}
+
+	// Handle CTRL+C
+	static void HandleCancelEvent(object? sender, ConsoleCancelEventArgs eventArgs) {
+		eventArgs.Cancel = true;
+		Sniffer.Close();
+		eventArgs.Cancel = false;
 	}
 }
