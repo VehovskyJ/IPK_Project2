@@ -65,6 +65,7 @@ public class PacketInfo {
 			Console.WriteLine($"src port: {SourcePort}");
 			Console.WriteLine($"dst port: {DestinationPort}");
 		}
+		Console.WriteLine($"protocol: {Protocol.ToString()}");
 		Console.WriteLine();
 
 		// 0x0000: 5c a6 e6 1a 85 f0 2c c8  1b 0a a7 fe 08 00 45 00  \¦æ..ð,È..§þ..E.
