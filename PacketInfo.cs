@@ -79,10 +79,8 @@ public class PacketInfo {
 			}
 			
 			Console.WriteLine($"protocol: {Protocol.ToString()}");
-		} else {
-			Console.WriteLine($"protocol: {EthernetType.ToString()}");
 		}
-		
+		Console.WriteLine($"ethernet type: {EthernetType.ToString()}");
 		Console.WriteLine();
 
 		// 0x0000: 5c a6 e6 1a 85 f0 2c c8  1b 0a a7 fe 08 00 45 00  \¦æ..ð,È..§þ..E.
