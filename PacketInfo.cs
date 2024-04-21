@@ -14,6 +14,7 @@ public class PacketInfo {
 	private int SourcePort { get; set; }
 	private int DestinationPort { get; set; }
 	private ProtocolType Protocol { get; set; }
+	private EthernetType EthernetType { get; set; }
 	private Packet? Packet { get; set; }
 
 	// Convert packet into object
@@ -22,23 +23,29 @@ public class PacketInfo {
 			packetCapture.GetPacket().Data);
 
 		var ethPacket = (EthernetPacket)Packet;
-		var ipPacket = (IPPacket)Packet.Extract<IPPacket>();
+		
+		// Do not extract IP information from ARP packets
+		EthernetType = ethPacket.Type;
+		if (EthernetType != EthernetType.Arp) {
+			var ipPacket = (IPPacket)Packet.Extract<IPPacket>();
+			
+			// Do not extract Ports from ICMP packets
+			Protocol = ipPacket.Protocol;
+			if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
+				var tpcPacket = (TcpPacket)Packet.Extract<TcpPacket>();
 
-		// Check if the protocol is ICMP
-		Protocol = ipPacket.Protocol;
-		if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
-			var tpcPacket = (TcpPacket)Packet.Extract<TcpPacket>();
-
-			SourcePort = tpcPacket.SourcePort;
-			DestinationPort = tpcPacket.DestinationPort;
+				SourcePort = tpcPacket.SourcePort;
+				DestinationPort = tpcPacket.DestinationPort;
+			}
+			
+			SourceIp = ipPacket.SourceAddress.ToString();
+			DestinationIp = ipPacket.DestinationAddress.ToString();
 		}
 		
 		Timestamp = packetCapture.Header.Timeval.Date.ToLocalTime().ToString("s");
 		SourceMac = FormatMacAddress(ethPacket.SourceHardwareAddress);
 		DestinationMac = FormatMacAddress(ethPacket.DestinationHardwareAddress);
 		FrameLength = packetCapture.Data.Length;
-		SourceIp = ipPacket.SourceAddress.ToString();
-		DestinationIp = ipPacket.DestinationAddress.ToString();
 	}
 
 	// Print packet information to the console
@@ -58,13 +65,20 @@ public class PacketInfo {
 		Console.WriteLine($"src MAC: {SourceMac}");
 		Console.WriteLine($"dst MAC: {DestinationMac}");
 		Console.WriteLine($"frame length: {FrameLength} bytes");
-		Console.WriteLine($"src IP: {SourceIp}");
-		Console.WriteLine($"dst IP: {DestinationIp}");
-		if (Protocol == ProtocolType.Icmp || Protocol != ProtocolType.IcmpV6) {
-			Console.WriteLine($"src port: {SourcePort}");
-			Console.WriteLine($"dst port: {DestinationPort}");
+		if (EthernetType != EthernetType.Arp) {
+			Console.WriteLine($"src IP: {SourceIp}");
+			Console.WriteLine($"dst IP: {DestinationIp}");
+			
+			if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
+				Console.WriteLine($"src port: {SourcePort}");
+				Console.WriteLine($"dst port: {DestinationPort}");
+			}
+			
+			Console.WriteLine($"protocol: {Protocol.ToString()}");
+		} else {
+			Console.WriteLine($"protocol: {EthernetType.ToString()}");
 		}
-		Console.WriteLine($"protocol: {Protocol.ToString()}");
+		
 		Console.WriteLine();
 
 		// 0x0000: 5c a6 e6 1a 85 f0 2c c8  1b 0a a7 fe 08 00 45 00  \¦æ..ð,È..§þ..E.
