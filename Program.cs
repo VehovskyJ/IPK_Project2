@@ -10,11 +10,18 @@ static class Program {
 	static void Main(string[] args) {
 		// Handle CTRL+C
 		Console.CancelKeyPress += new ConsoleCancelEventHandler(HandleCancelEvent);
-		
+
 		// Parse arguments
 		ParserResult<Cli> cli = Parser.Default.ParseArguments<Cli>(args);
-		cli.WithNotParsed(o => {
-			Environment.Exit(0);
+		cli.WithNotParsed(o => { Environment.Exit(0); });
+		cli.WithParsed(o => {
+			if (o is { Port: not null, PortDestination: not null } or { Port: not null, PortSource: not null } or { PortDestination: not null, PortSource: not null }) {
+				Error.Exit("Invalid combination of arguments. -p --port-destination and --port-source cannot be used in combination");
+			}
+
+			if ((o.Port != null || o.PortDestination != null || o.PortSource != null) && o is { Tcp: false, Udp: false }) {
+				Error.Exit("Invalid combination of arguments. -p --port-destination and --port-source have to be used in combination with --tcp or --udp");
+			}
 		});
 
 		// Print available interfaces if the value for -i or --interface was not specified or no argument were provided
@@ -24,7 +31,7 @@ static class Program {
 			} catch (Exception e) {
 				Error.Exit(e.Message);
 			}
-			
+
 			Environment.Exit(0);
 		}
 
@@ -36,7 +43,7 @@ static class Program {
 			} catch (Exception e) {
 				Error.Exit(e.Message);
 			}
-			
+
 			Environment.Exit(1);
 		}
 
