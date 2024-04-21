@@ -44,6 +44,16 @@ public static class Sniffer {
 			Close();
 			Environment.Exit(0);
 		}
+
+		try {
+			// If the packet does not match any filters return
+			if (!MatchesFilters(packetCapture)) {
+				return;
+			}
+		} catch (Exception e) {
+			Error.Exit(e.Message);
+		}
+
 		_packetCaptured++;
 
 		try {
@@ -53,5 +63,81 @@ public static class Sniffer {
 		} catch (Exception e) {
 			Error.Exit(e.Message);
 		}
+	}
+
+	static bool MatchesFilters(PacketCapture packetCapture) {
+		// Return true if no argument is set
+		if (!(_args.Tcp || _args.Udp || _args.Icmp4 || _args.Icmp6 || _args.Arp || _args.Ndp || _args.Igmp ||
+		      _args.Mld)) {
+			return true;
+		}
+
+		if (GetPacketEthernetType(packetCapture) == EthernetType.IPv4 ||
+		    GetPacketEthernetType(packetCapture) == EthernetType.IPv6) {
+			if (_args.Tcp && GetPacketProtocol(packetCapture) == ProtocolType.Tcp) {
+				return true;
+			}
+
+			if (_args.Udp && GetPacketProtocol(packetCapture) == ProtocolType.Udp) {
+				return true;
+			}
+
+			if (_args.Icmp4 && GetPacketProtocol(packetCapture) == ProtocolType.Icmp) {
+				return true;
+			}
+
+			if (_args.Icmp6 && GetPacketProtocol(packetCapture) == ProtocolType.IcmpV6) {
+				return true;
+			}
+
+			if (_args.Igmp && GetPacketProtocol(packetCapture) == ProtocolType.Igmp) {
+				return true;
+			}
+
+			if (_args.Ndp && GetPacketProtocol(packetCapture) == ProtocolType.IcmpV6) {
+				var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
+					packetCapture.GetPacket().Data);
+				var icmpPacket = (IcmpV6Packet)packet.Extract<IcmpV6Packet>();
+
+				if (icmpPacket.Type is IcmpV6Type.RouterSolicitation or IcmpV6Type.RouterAdvertisement
+				    or IcmpV6Type.NeighborSolicitation or IcmpV6Type.NeighborAdvertisement
+				    or IcmpV6Type.RedirectMessage) {
+					return true;
+				}
+			}
+
+			if (_args.Mld && GetPacketProtocol(packetCapture) == ProtocolType.IcmpV6) {
+				var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
+					packetCapture.GetPacket().Data);
+				var icmpPacket = (IcmpV6Packet)packet.Extract<IcmpV6Packet>();
+
+				if (icmpPacket.Type is IcmpV6Type.MulticastListenerQuery or IcmpV6Type.MulticastListenerReport
+				    or IcmpV6Type.MulticastListenerDone) {
+					return true;
+				}
+			}
+		}
+
+		if (_args.Arp && GetPacketEthernetType(packetCapture) == EthernetType.Arp) {
+			return true;
+		}
+
+		return false;
+	}
+
+	// Return ProtocolType of a PacketCapture
+	static ProtocolType GetPacketProtocol(PacketCapture packetCapture) {
+		var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
+			packetCapture.GetPacket().Data);
+		var ipPacket = (IPPacket)packet.Extract<IPPacket>();
+		return ipPacket.Protocol;
+	}
+
+	// Return EthernetType of a PacketCapture
+	static EthernetType GetPacketEthernetType(PacketCapture packetCapture) {
+		var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
+			packetCapture.GetPacket().Data);
+		var ethPacket = (EthernetPacket)packet;
+		return ethPacket.Type;
 	}
 }
