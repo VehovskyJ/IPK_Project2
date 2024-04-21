@@ -26,16 +26,20 @@ public class PacketInfo {
 		
 		// Do not extract IP information from ARP packets
 		EthernetType = ethPacket.Type;
-		if (EthernetType != EthernetType.Arp) {
+		if (EthernetType == EthernetType.IPv4 || EthernetType == EthernetType.IPv6) {
 			var ipPacket = (IPPacket)Packet.Extract<IPPacket>();
 			
-			// Do not extract Ports from ICMP packets
 			Protocol = ipPacket.Protocol;
-			if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
+			if (Protocol == ProtocolType.Tcp) {
 				var tpcPacket = (TcpPacket)Packet.Extract<TcpPacket>();
-
+				
 				SourcePort = tpcPacket.SourcePort;
 				DestinationPort = tpcPacket.DestinationPort;
+			} else if (Protocol == ProtocolType.Udp) {
+				var udpPacket = (UdpPacket)Packet.Extract<UdpPacket>();
+				
+				SourcePort = udpPacket.SourcePort;
+				DestinationPort = udpPacket.DestinationPort;
 			}
 			
 			SourceIp = ipPacket.SourceAddress.ToString();
@@ -65,11 +69,11 @@ public class PacketInfo {
 		Console.WriteLine($"src MAC: {SourceMac}");
 		Console.WriteLine($"dst MAC: {DestinationMac}");
 		Console.WriteLine($"frame length: {FrameLength} bytes");
-		if (EthernetType != EthernetType.Arp) {
+		if (EthernetType == EthernetType.IPv4 || EthernetType == EthernetType.IPv6) {
 			Console.WriteLine($"src IP: {SourceIp}");
 			Console.WriteLine($"dst IP: {DestinationIp}");
 			
-			if (Protocol != ProtocolType.Icmp && Protocol != ProtocolType.IcmpV6) {
+			if (Protocol == ProtocolType.Tcp || Protocol == ProtocolType.Udp) {
 				Console.WriteLine($"src port: {SourcePort}");
 				Console.WriteLine($"dst port: {DestinationPort}");
 			}
