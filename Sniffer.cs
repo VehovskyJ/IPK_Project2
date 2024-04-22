@@ -27,7 +27,7 @@ public static class Sniffer {
 		_dev.Open(DeviceModes.Promiscuous);
 		_dev.StartCapture();
 
-		// Wait until the program is terminated by user or all captures all packets
+		// Wait while capturing packets
 		while (true) { }
 	}
 
