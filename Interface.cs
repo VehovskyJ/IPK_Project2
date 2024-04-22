@@ -30,13 +30,7 @@ public static class Interface {
 	// Check if interface exists
 	public static bool InterfaceExists(string intf) {
 		NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
-		
-		foreach (var networkInterface in interfaces) {
-			if (networkInterface.Name == intf) {
-				return true;
-			}
-		}
 
-		return false;
+		return interfaces.Any(networkInterface => networkInterface.Name == intf);
 	}
 }
