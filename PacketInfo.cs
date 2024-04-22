@@ -31,7 +31,7 @@ public class PacketInfo : IPacketInfo {
 			ParseIpPacket();
 		}
 
-		Timestamp = packetCapture.Header.Timeval.Date.ToLocalTime().ToString("s");
+		Timestamp = packetCapture.Header.Timeval.Date.ToLocalTime().ToString("o");
 		FrameLength = packetCapture.Data.Length;
 	}
 
