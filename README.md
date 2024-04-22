@@ -1,6 +1,13 @@
+<div align="center">
+
+[<img src="docs/cmuchac.png" width="100">]()
+
 # IPK Packet Sniffer
 
-### Table of contents
+</div>
+
+## Table of contents
+
 - [Executive Summary](#summary)
 - [Implementation](#implementation)
   - [Capturing Packets](#capturing-packets)
