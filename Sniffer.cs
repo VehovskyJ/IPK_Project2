@@ -12,7 +12,7 @@ public static class Sniffer {
 	// Start capturing packets
 	public static void Sniff(Cli args) {
 		_args = args;
-		
+
 		// Get capturing device
 		_dev = CaptureDeviceList.Instance.FirstOrDefault(device => device.Name == args.Interface);
 
@@ -24,7 +24,7 @@ public static class Sniffer {
 		_dev.OnPacketArrival += new PacketArrivalEventHandler(OnPacket);
 		_dev.Open(DeviceModes.Promiscuous);
 		_dev.StartCapture();
-		
+
 		// Wait until the program is terminated by user or by internal logic
 		while (true) { }
 	}
@@ -66,20 +66,30 @@ public static class Sniffer {
 	}
 
 	static bool MatchesFilters(PacketCapture packetCapture) {
+		var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
+			packetCapture.GetPacket().Data);
+
 		// Return true if no argument is set
 		if (!(_args.Tcp || _args.Udp || _args.Icmp4 || _args.Icmp6 || _args.Arp || _args.Ndp || _args.Igmp ||
 		      _args.Mld)) {
 			return true;
 		}
 
+		// Filter IP packets
 		if (GetPacketEthernetType(packetCapture) == EthernetType.IPv4 ||
 		    GetPacketEthernetType(packetCapture) == EthernetType.IPv6) {
 			if (_args.Tcp && GetPacketProtocol(packetCapture) == ProtocolType.Tcp) {
-				return true;
+				// If port filtering is set, continue
+				if (_args.Port == null && _args.PortDestination == null && _args.PortSource == null) {
+					return true;
+				}
 			}
 
 			if (_args.Udp && GetPacketProtocol(packetCapture) == ProtocolType.Udp) {
-				return true;
+				// If port filtering is set, continue
+				if (_args.Port == null && _args.PortDestination == null && _args.PortSource == null) {
+					return true;
+				}
 			}
 
 			if (_args.Icmp4 && GetPacketProtocol(packetCapture) == ProtocolType.Icmp) {
@@ -95,8 +105,6 @@ public static class Sniffer {
 			}
 
 			if (_args.Ndp && GetPacketProtocol(packetCapture) == ProtocolType.IcmpV6) {
-				var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
-					packetCapture.GetPacket().Data);
 				var icmpPacket = (IcmpV6Packet)packet.Extract<IcmpV6Packet>();
 
 				if (icmpPacket.Type is IcmpV6Type.RouterSolicitation or IcmpV6Type.RouterAdvertisement
@@ -107,8 +115,6 @@ public static class Sniffer {
 			}
 
 			if (_args.Mld && GetPacketProtocol(packetCapture) == ProtocolType.IcmpV6) {
-				var packet = PacketDotNet.Packet.ParsePacket(packetCapture.GetPacket().LinkLayerType,
-					packetCapture.GetPacket().Data);
 				var icmpPacket = (IcmpV6Packet)packet.Extract<IcmpV6Packet>();
 
 				if (icmpPacket.Type is IcmpV6Type.MulticastListenerQuery or IcmpV6Type.MulticastListenerReport
@@ -116,8 +122,35 @@ public static class Sniffer {
 					return true;
 				}
 			}
+
+			// Filter by port
+			if (GetPacketProtocol(packetCapture) == ProtocolType.Tcp ||
+			    GetPacketProtocol(packetCapture) == ProtocolType.Udp) {
+				var ipPacket = (IPPacket)packet.Extract<IPPacket>();
+				int srcPort = 0;
+				int dstPort = 0;
+
+				if (ipPacket.Protocol == ProtocolType.Tcp) {
+					var tpcPacket = (TcpPacket)packet.Extract<TcpPacket>();
+
+					srcPort = tpcPacket.SourcePort;
+					dstPort = tpcPacket.DestinationPort;
+				} else if (ipPacket.Protocol == ProtocolType.Udp) {
+					var udpPacket = (UdpPacket)packet.Extract<UdpPacket>();
+
+					srcPort = udpPacket.SourcePort;
+					dstPort = udpPacket.DestinationPort;
+				}
+
+				if ((_args.PortDestination != null && _args.PortDestination == dstPort) ||
+				    (_args.PortSource != null && _args.PortSource == srcPort) ||
+				    (_args.Port != null && (_args.Port == srcPort || _args.Port == dstPort))) {
+					return true;
+				}
+			}
 		}
 
+		// Filter Arp packets
 		if (_args.Arp && GetPacketEthernetType(packetCapture) == EthernetType.Arp) {
 			return true;
 		}
