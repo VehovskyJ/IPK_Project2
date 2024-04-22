@@ -1,10 +1,11 @@
 using System.Net.NetworkInformation;
+using IPK_Project2.Interfaces;
 using PacketDotNet;
 using SharpPcap;
 
 namespace IPK_Project2;
 
-public class PacketInfo {
+public class PacketInfo : IPacketInfo {
 	private string? Timestamp { get; set; }
 	private string? SourceMac { get; set; }
 	private string? DestinationMac { get; set; }
